@@ -158,6 +158,7 @@ Report what was and was not verified. Never claim success without having run som
 - Schema changes require an approved plan that covers: migration of existing rows, updating `SCHEMA`, `models.py`, templates and the seed data, and a backup/checkpoint first. `CREATE TABLE IF NOT EXISTS` does **not** alter existing tables.
 - Seed data only loads into an empty table. Never seed or reset the real database without explicit approval.
 - Never delete or overwrite `data/tickets.db` without asking.
+- A `PreToolUse` hook (`.claude/hooks/protect-data.py`, registered in `.claude/settings.json`) blocks Claude's Edit/MultiEdit/Write/NotebookEdit under `data/` (exit code 2). `data/processed/` is the only writable place inside `data/`. Do not edit or bypass the hook or its settings without explicit approval; it does not cover Bash, so never use shell commands to get around it.
 
 ## 8. Change Management Process
 

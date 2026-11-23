@@ -39,6 +39,29 @@ python -m pytest -v
 
 Tests use a temporary database, so `data/tickets.db` is never touched.
 
+## Protecting `data/` from Claude Code (optional hook)
+
+A Claude Code `PreToolUse` hook stops Claude's `Edit`, `MultiEdit`, `Write` and
+`NotebookEdit` tools from changing anything under `data/` (except `data/processed/`).
+Reading is not affected. A blocked write exits with code 2 and shows:
+
+> Raw data files are protected.
+>
+> Write changes only to data/processed.
+
+**Installation**
+1. Keep both files in place: `.claude/hooks/protect-data.py` and `.claude/settings.json`
+   (the settings file registers the hook; no other setup is needed).
+2. Make sure `python` works in a terminal (`python --version`). The hook runs through it.
+3. Restart Claude Code in this folder and accept the project hook if prompted.
+4. Run `/hooks` and confirm a `PreToolUse` entry for `Edit|MultiEdit|Write|NotebookEdit`.
+5. Test it: ask Claude to create `data/test.txt`. It should be refused with the message above.
+
+**Limits:** only Claude's edit tools are intercepted. Shell commands run through Bash
+(for example `rm data/tickets.db`) and the Flask app itself can still change `data/`.
+If `python` cannot be found when the hook runs, Claude Code treats it as a non-blocking
+error and the write is allowed, so always do the test in step 5.
+
 ## Project layout
 
 | File | Purpose |
