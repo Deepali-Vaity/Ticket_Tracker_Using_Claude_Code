@@ -69,7 +69,7 @@ Browser (Bootstrap 5 pages)
 
 | Method | URL | Purpose |
 |---|---|---|
-| GET | `/` | List; `?status=` filters (invalid values are ignored); `?engineer=<name>` or `?engineer=__unassigned__` filters by engineer; both combine |
+| GET | `/` | List; `?status=` filters (invalid values are ignored); `?engineer=<name>` or `?engineer=__unassigned__` filters by engineer; `?priority=Low|Medium|High` filters by priority (invalid ignored); all three combine |
 | GET/POST | `/tickets/new` | Create ticket |
 | GET | `/tickets/<int:id>` | Detail (404 if missing) |
 | POST | `/tickets/<int:id>/status` | Update status, then redirect to detail |
@@ -114,7 +114,7 @@ Browser (Bootstrap 5 pages)
 
 ## 6. Testing Strategy
 
-Current state: 55 `pytest` tests in `tests/` (`test_models.py`, `test_routes.py`). Run with `pip install -r requirements-dev.txt` then `python -m pytest -v`. Run them after every change and add or update tests for any behaviour you change.
+Current state: 65 `pytest` tests in `tests/` (`test_models.py`, `test_routes.py`). Run with `pip install -r requirements-dev.txt` then `python -m pytest -v`. Run them after every change and add or update tests for any behaviour you change.
 
 `tests/conftest.py` sets `TICKET_DB_PATH` to a temp file **before** importing the app (database.py reads it at import time) and empties the table before each test. Never bypass this; tests must not touch the real `data/tickets.db`.
 

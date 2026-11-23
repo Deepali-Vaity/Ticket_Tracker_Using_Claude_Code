@@ -226,3 +226,40 @@ def test_engineer_name_is_html_escaped(client, make_ticket):
         data = client.get(url).data
         assert b"<script>alert(1)</script>" not in data
         assert b"&lt;script&gt;" in data
+
+
+# ---- priority filter -------------------------------------------------------
+
+def test_index_filter_by_priority(client, make_ticket):
+    make_ticket(title="HighOne", priority="High")
+    make_ticket(title="LowOne", priority="Low")
+    data = client.get("/?priority=High").data
+    assert b"HighOne" in data and b"LowOne" not in data
+
+
+def test_index_invalid_priority_shows_all(client, make_ticket):
+    make_ticket(title="HighOne", priority="High")
+    make_ticket(title="LowOne", priority="Low")
+    data = client.get("/?priority=bogus").data
+    assert b"HighOne" in data and b"LowOne" in data
+
+
+def test_index_all_three_filters_combine(client, make_ticket):
+    make_ticket(title="Hit", priority="High", engineer="Alex", status="Closed")
+    make_ticket(title="Miss", priority="Low", engineer="Alex", status="Closed")
+    data = client.get("/?status=Closed&engineer=Alex&priority=High").data
+    assert b"Hit" in data and b"Miss" not in data
+
+
+def test_priority_dropdown_has_options_and_selection(client):
+    data = client.get("/?priority=Medium").data.decode()
+    for label in ("All priorities", "Low", "Medium", "High"):
+        assert label in data
+    assert 'value="Medium" selected' in data
+
+
+def test_status_links_keep_priority_filter(client):
+    data = client.get("/?priority=High&engineer=Alex").data.decode()
+    for status in ("Open", "In+Progress", "Closed"):
+        assert f"status={status}&amp;engineer=Alex&amp;priority=High" in data
+    assert "/?engineer=Alex&amp;priority=High" in data  # the "All" button

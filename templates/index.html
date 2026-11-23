@@ -5,10 +5,10 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <h1 class="h3 mb-0">Tickets</h1>
   <div class="btn-group" role="group" aria-label="Filter by status">
-    <a href="{{ url_for('index', engineer=current_engineer or None) }}"
+    <a href="{{ url_for('index', engineer=current_engineer or None, priority=current_priority or None) }}"
        class="btn btn-outline-secondary {{ 'active' if not current_status }}">All</a>
     {% for s in STATUSES %}
-      <a href="{{ url_for('index', status=s, engineer=current_engineer or None) }}"
+      <a href="{{ url_for('index', status=s, engineer=current_engineer or None, priority=current_priority or None) }}"
          class="btn btn-outline-secondary {{ 'active' if current_status == s }}">{{ s }}</a>
     {% endfor %}
   </div>
@@ -22,6 +22,13 @@
     <option value="{{ UNASSIGNED }}" {{ 'selected' if current_engineer == UNASSIGNED }}>Unassigned</option>
     {% for name in engineers %}
       <option value="{{ name }}" {{ 'selected' if current_engineer|lower == name|lower }}>{{ name }}</option>
+    {% endfor %}
+  </select>
+  <label for="priority" class="form-label mb-0 ms-2">Priority</label>
+  <select class="form-select form-select-sm w-auto" id="priority" name="priority">
+    <option value="">All priorities</option>
+    {% for p in PRIORITIES %}
+      <option value="{{ p }}" {{ 'selected' if current_priority == p }}>{{ p }}</option>
     {% endfor %}
   </select>
   <button type="submit" class="btn btn-sm btn-outline-primary">Apply</button>
@@ -48,7 +55,7 @@
         {% else %}
         <tr>
           <td colspan="6" class="text-center text-muted py-4">
-            No tickets found{% if current_status or current_engineer %} for the selected filters{% endif %}.
+            No tickets found{% if current_status or current_engineer or current_priority %} for the selected filters{% endif %}.
           </td>
         </tr>
         {% endfor %}

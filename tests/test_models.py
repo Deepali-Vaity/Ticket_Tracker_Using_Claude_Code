@@ -176,3 +176,28 @@ def test_init_db_migrates_old_database(tmp_path, monkeypatch):
         conn.close()
     assert row["title"] == "old"
     assert row["assigned_engineer"] is None
+
+
+# ---- priority filter -------------------------------------------------------
+
+@pytest.mark.parametrize("priority", models.PRIORITIES)
+def test_list_filter_by_priority(make_ticket, priority):
+    for p in models.PRIORITIES:
+        make_ticket(title=f"t-{p}", priority=p)
+    tickets = models.list_tickets(priority=priority)
+    assert [t["priority"] for t in tickets] == [priority]
+
+
+def test_list_invalid_priority_returns_all(make_ticket):
+    make_ticket(priority="Low")
+    make_ticket(priority="High")
+    assert len(models.list_tickets(priority="Urgent")) == 2
+
+
+def test_filter_priority_with_status_and_engineer(make_ticket):
+    make_ticket(title="hit", priority="High", engineer="Alex", status="Closed")
+    make_ticket(title="wrong priority", priority="Low", engineer="Alex", status="Closed")
+    make_ticket(title="wrong status", priority="High", engineer="Alex")
+    make_ticket(title="wrong engineer", priority="High", engineer="Sam", status="Closed")
+    titles = [t["title"] for t in models.list_tickets("Closed", "Alex", "High")]
+    assert titles == ["hit"]

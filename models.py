@@ -42,16 +42,20 @@ def get_ticket(ticket_id):
         conn.close()
 
 
-def list_tickets(status=None, engineer=None):
-    """Return tickets newest first, optionally filtered by status and/or engineer.
+def list_tickets(status=None, engineer=None, priority=None):
+    """Return tickets newest first, optionally filtered by status, engineer, priority.
 
     engineer may be a name (matched case-insensitively) or UNASSIGNED.
+    Invalid status or priority values are ignored.
     """
     conditions = []
     params = []
     if status in STATUSES:
         conditions.append("status = ?")
         params.append(status)
+    if priority in PRIORITIES:
+        conditions.append("priority = ?")
+        params.append(priority)
     if engineer == UNASSIGNED:
         conditions.append("assigned_engineer IS NULL")
     elif engineer:

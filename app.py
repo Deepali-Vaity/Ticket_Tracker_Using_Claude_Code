@@ -33,16 +33,20 @@ def inject_constants():
 
 @app.route("/")
 def index():
-    """List tickets, filtered with ?status=... and/or ?engineer=<name>|unassigned."""
+    """List tickets, filtered with ?status=..., ?priority=... and/or ?engineer=..."""
     status = request.args.get("status", "")
     if status not in models.STATUSES:
         status = ""
+    priority = request.args.get("priority", "")
+    if priority not in models.PRIORITIES:
+        priority = ""
     engineer = request.args.get("engineer", "").strip()
-    tickets = models.list_tickets(status or None, engineer or None)
+    tickets = models.list_tickets(status or None, engineer or None, priority or None)
     return render_template(
         "index.html",
         tickets=tickets,
         current_status=status,
+        current_priority=priority,
         current_engineer=engineer,
         engineers=models.list_engineers(),
     )

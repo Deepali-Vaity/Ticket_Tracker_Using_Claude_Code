@@ -54,7 +54,7 @@ Tests use a temporary database, so `data/tickets.db` is never touched.
 
 | URL | Description |
 |---|---|
-| `/` | Ticket list; `?status=Open` (or `In Progress`, `Closed`) and `?engineer=Name` filters, combinable |
+| `/` | Ticket list; `?status=Open` (or `In Progress`, `Closed`) and `?engineer=Name` and `?priority=Low` (or `Medium`, `High`) filters, all combinable |
 | `/tickets/<id>/engineer` | POST: assign or clear the engineer (used by the detail page) |
 | `/tickets/new` | Create a ticket |
 | `/tickets/<id>` | Ticket details and status update |
