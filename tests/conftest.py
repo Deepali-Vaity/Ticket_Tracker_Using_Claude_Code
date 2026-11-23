@@ -39,8 +39,9 @@ def client():
 @pytest.fixture
 def make_ticket():
     """Create a ticket and return its id."""
-    def _make(title="Printer jam", description="Paper stuck", priority="Medium", status=None):
-        ticket_id = models.create_ticket(title, description, priority)
+    def _make(title="Printer jam", description="Paper stuck", priority="Medium",
+              status=None, engineer=None):
+        ticket_id = models.create_ticket(title, description, priority, engineer)
         if status:
             models.update_status(ticket_id, status)
         return ticket_id

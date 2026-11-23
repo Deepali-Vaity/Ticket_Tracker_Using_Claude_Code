@@ -97,3 +97,82 @@ def test_db_rejects_bad_priority_and_status():
             )
     finally:
         conn.close()
+
+
+# ---- assigned engineer -----------------------------------------------------
+
+def test_create_with_and_without_engineer(make_ticket):
+    assert models.get_ticket(make_ticket(engineer="Alex Morgan"))["assigned_engineer"] == "Alex Morgan"
+    assert models.get_ticket(make_ticket())["assigned_engineer"] is None
+
+
+def test_filter_by_engineer_case_insensitive(make_ticket):
+    make_ticket(title="a", engineer="Alex Morgan")
+    make_ticket(title="b", engineer="Sam Patel")
+    titles = [t["title"] for t in models.list_tickets(engineer="alex morgan")]
+    assert titles == ["a"]
+
+
+def test_filter_unassigned(make_ticket):
+    make_ticket(title="mine", engineer="Alex")
+    make_ticket(title="nobody")
+    titles = [t["title"] for t in models.list_tickets(engineer=models.UNASSIGNED)]
+    assert titles == ["nobody"]
+
+
+def test_filter_status_and_engineer_combined(make_ticket):
+    make_ticket(title="match", engineer="Alex", status="Closed")
+    make_ticket(title="wrong status", engineer="Alex")
+    make_ticket(title="wrong engineer", engineer="Sam", status="Closed")
+    titles = [t["title"] for t in models.list_tickets("Closed", "Alex")]
+    assert titles == ["match"]
+
+
+def test_list_engineers_distinct_sorted(make_ticket):
+    make_ticket(engineer="sam")
+    make_ticket(engineer="Alex")
+    make_ticket(engineer="Sam")
+    make_ticket()
+    assert [n.lower() for n in models.list_engineers()] == ["alex", "sam"]
+
+
+def test_update_engineer_assign_and_clear(make_ticket):
+    ticket_id = make_ticket()
+    assert models.update_engineer(ticket_id, "Alex") is True
+    assert models.get_ticket(ticket_id)["assigned_engineer"] == "Alex"
+    assert models.update_engineer(ticket_id, "") is True
+    assert models.get_ticket(ticket_id)["assigned_engineer"] is None
+
+
+def test_update_engineer_unknown_ticket():
+    assert models.update_engineer(999, "Alex") is False
+
+
+def test_engineer_filter_is_injection_safe(make_ticket):
+    make_ticket(engineer="Alex")
+    assert models.list_tickets(engineer="x' OR '1'='1") == []
+
+
+def test_init_db_migrates_old_database(tmp_path, monkeypatch):
+    old_path = tmp_path / "old.db"
+    conn = sqlite3.connect(old_path)
+    conn.executescript(
+        "CREATE TABLE tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, "
+        "description TEXT NOT NULL, priority TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'Open', "
+        "created_at TEXT NOT NULL);"
+        "INSERT INTO tickets (title, description, priority, status, created_at) "
+        "VALUES ('old', 'row', 'Low', 'Open', '2026-01-01 00:00:00');"
+    )
+    conn.close()
+    monkeypatch.setattr(database, "DB_PATH", old_path)
+
+    database.init_db()
+    database.init_db()  # running twice must be safe
+
+    conn = database.get_connection()
+    try:
+        row = conn.execute("SELECT title, assigned_engineer FROM tickets").fetchone()
+    finally:
+        conn.close()
+    assert row["title"] == "old"
+    assert row["assigned_engineer"] is None

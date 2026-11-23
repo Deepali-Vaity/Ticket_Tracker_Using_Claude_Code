@@ -9,6 +9,7 @@ from database import init_db
 
 TITLE_MAX = 100
 DESCRIPTION_MAX = 2000
+ENGINEER_MAX = 100
 
 app = Flask(__name__)
 # Set SECRET_KEY in the environment for any real deployment.
@@ -25,27 +26,37 @@ def inject_constants():
         "STATUSES": models.STATUSES,
         "STATUS_COLORS": {"Open": "primary", "In Progress": "warning", "Closed": "success"},
         "PRIORITY_COLORS": {"Low": "secondary", "Medium": "info", "High": "danger"},
+        "UNASSIGNED": models.UNASSIGNED,
+        "ENGINEER_MAX": ENGINEER_MAX,
     }
 
 
 @app.route("/")
 def index():
-    """List tickets, optionally filtered with ?status=Open|In Progress|Closed."""
+    """List tickets, filtered with ?status=... and/or ?engineer=<name>|unassigned."""
     status = request.args.get("status", "")
     if status not in models.STATUSES:
         status = ""
-    tickets = models.list_tickets(status or None)
-    return render_template("index.html", tickets=tickets, current_status=status)
+    engineer = request.args.get("engineer", "").strip()
+    tickets = models.list_tickets(status or None, engineer or None)
+    return render_template(
+        "index.html",
+        tickets=tickets,
+        current_status=status,
+        current_engineer=engineer,
+        engineers=models.list_engineers(),
+    )
 
 
 @app.route("/tickets/new", methods=["GET", "POST"])
 def create_ticket():
     """Show the form (GET) or validate and save a new ticket (POST)."""
-    form = {"title": "", "description": "", "priority": "Medium"}
+    form = {"title": "", "description": "", "priority": "Medium", "assigned_engineer": ""}
     if request.method == "POST":
         form["title"] = request.form.get("title", "").strip()
         form["description"] = request.form.get("description", "").strip()
         form["priority"] = request.form.get("priority", "")
+        form["assigned_engineer"] = request.form.get("assigned_engineer", "").strip()
 
         errors = []
         if not form["title"]:
@@ -58,13 +69,16 @@ def create_ticket():
             errors.append(f"Description must be at most {DESCRIPTION_MAX} characters.")
         if form["priority"] not in models.PRIORITIES:
             errors.append("Please choose a valid priority.")
+        if len(form["assigned_engineer"]) > ENGINEER_MAX:
+            errors.append(f"Engineer name must be at most {ENGINEER_MAX} characters.")
 
         if errors:
             for message in errors:
                 flash(message, "danger")
         else:
             ticket_id = models.create_ticket(
-                form["title"], form["description"], form["priority"]
+                form["title"], form["description"], form["priority"],
+                form["assigned_engineer"] or None,
             )
             flash(f"Ticket #{ticket_id} created.", "success")
             return redirect(url_for("ticket_detail", ticket_id=ticket_id))
@@ -91,6 +105,19 @@ def update_ticket_status(ticket_id):
         flash(f"Status updated to '{new_status}'.", "success")
     else:
         flash("Invalid status.", "danger")
+    return redirect(url_for("ticket_detail", ticket_id=ticket_id))
+
+
+@app.route("/tickets/<int:ticket_id>/engineer", methods=["POST"])
+def update_ticket_engineer(ticket_id):
+    """Assign an engineer; an empty name clears the assignment."""
+    if models.get_ticket(ticket_id) is None:
+        abort(404)
+    engineer = request.form.get("assigned_engineer", "").strip()
+    if len(engineer) > ENGINEER_MAX:
+        flash(f"Engineer name must be at most {ENGINEER_MAX} characters.", "danger")
+    elif models.update_engineer(ticket_id, engineer or None):
+        flash(f"Assigned to {engineer}." if engineer else "Ticket unassigned.", "success")
     return redirect(url_for("ticket_detail", ticket_id=ticket_id))
 
 

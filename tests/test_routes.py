@@ -136,3 +136,93 @@ def test_user_input_is_html_escaped(client, make_ticket):
         data = client.get(url).data
         assert b"<script>alert(1)</script>" not in data
         assert b"&lt;script&gt;" in data
+
+
+# ---- assigned engineer -----------------------------------------------------
+
+def test_index_filter_by_engineer(client, make_ticket):
+    make_ticket(title="AlexTicket", engineer="Alex")
+    make_ticket(title="SamTicket", engineer="Sam")
+    data = client.get("/?engineer=Alex").data
+    assert b"AlexTicket" in data
+    assert b"SamTicket" not in data
+
+
+def test_index_filter_unassigned(client, make_ticket):
+    make_ticket(title="AlexTicket", engineer="Alex")
+    make_ticket(title="NobodyTicket")
+    data = client.get(f"/?engineer={models.UNASSIGNED}").data
+    assert b"NobodyTicket" in data
+    assert b"AlexTicket" not in data
+
+
+def test_index_filter_status_and_engineer(client, make_ticket):
+    make_ticket(title="Hit", engineer="Alex", status="Closed")
+    make_ticket(title="Miss", engineer="Alex")
+    data = client.get("/?status=Closed&engineer=Alex").data
+    assert b"Hit" in data and b"Miss" not in data
+
+
+def test_index_dropdown_lists_engineers(client, make_ticket):
+    make_ticket(engineer="Alex Morgan")
+    data = client.get("/").data
+    assert b'value="Alex Morgan"' in data
+    assert b"Unassigned" in data
+
+
+def test_create_with_engineer(client):
+    client.post("/tickets/new", data={**VALID, "assigned_engineer": "  Alex  "})
+    assert models.get_ticket(1)["assigned_engineer"] == "Alex"
+
+
+def test_create_without_engineer_is_unassigned(client):
+    client.post("/tickets/new", data=VALID)
+    assert models.get_ticket(1)["assigned_engineer"] is None
+
+
+def test_create_engineer_too_long_rejected(client):
+    response = client.post("/tickets/new", data={**VALID, "assigned_engineer": "x" * 101})
+    assert b"Engineer name must be at most 100" in response.data
+    assert models.list_tickets() == []
+
+
+def test_detail_shows_engineer_or_unassigned(client, make_ticket):
+    assigned = make_ticket(engineer="Alex Morgan")
+    nobody = make_ticket()
+    assert b"Alex Morgan" in client.get(f"/tickets/{assigned}").data
+    assert b"Unassigned" in client.get(f"/tickets/{nobody}").data
+
+
+def test_assign_engineer_route(client, make_ticket):
+    ticket_id = make_ticket()
+    response = client.post(f"/tickets/{ticket_id}/engineer", data={"assigned_engineer": " Sam "})
+    assert response.status_code == 302
+    assert models.get_ticket(ticket_id)["assigned_engineer"] == "Sam"
+
+
+def test_assign_empty_unassigns(client, make_ticket):
+    ticket_id = make_ticket(engineer="Sam")
+    client.post(f"/tickets/{ticket_id}/engineer", data={"assigned_engineer": ""})
+    assert models.get_ticket(ticket_id)["assigned_engineer"] is None
+
+
+def test_assign_too_long_rejected(client, make_ticket):
+    ticket_id = make_ticket(engineer="Sam")
+    response = client.post(
+        f"/tickets/{ticket_id}/engineer",
+        data={"assigned_engineer": "x" * 101}, follow_redirects=True,
+    )
+    assert b"at most 100" in response.data
+    assert models.get_ticket(ticket_id)["assigned_engineer"] == "Sam"
+
+
+def test_assign_unknown_ticket_is_404(client):
+    assert client.post("/tickets/999/engineer", data={"assigned_engineer": "x"}).status_code == 404
+
+
+def test_engineer_name_is_html_escaped(client, make_ticket):
+    ticket_id = make_ticket(engineer="<script>alert(1)</script>")
+    for url in ("/", f"/tickets/{ticket_id}"):
+        data = client.get(url).data
+        assert b"<script>alert(1)</script>" not in data
+        assert b"&lt;script&gt;" in data

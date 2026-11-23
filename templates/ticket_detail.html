@@ -18,7 +18,10 @@
           <span class="badge text-bg-{{ PRIORITY_COLORS[ticket.priority] }}">{{ ticket.priority }} priority</span>
           <span class="badge text-bg-{{ STATUS_COLORS[ticket.status] }}">{{ ticket.status }}</span>
         </div>
-        <p class="ticket-description mb-0">{{ ticket.description }}</p>
+        <p class="ticket-description">{{ ticket.description }}</p>
+        <p class="mb-0"><strong>Assigned to:</strong>
+          {% if ticket.assigned_engineer %}{{ ticket.assigned_engineer }}{% else %}<span class="text-muted">Unassigned</span>{% endif %}
+        </p>
       </div>
       <div class="card-footer text-muted small">Created {{ ticket.created_at }}</div>
     </div>
@@ -34,6 +37,19 @@
               <option value="{{ s }}" {{ 'selected' if ticket.status == s }}>{{ s }}</option>
             {% endfor %}
           </select>
+          <button type="submit" class="btn btn-primary w-100">Save</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-body">
+        <h2 class="h6">Assign engineer</h2>
+        <form method="post" action="{{ url_for('update_ticket_engineer', ticket_id=ticket.id) }}">
+          <input type="text" class="form-control mb-2" name="assigned_engineer"
+                 maxlength="{{ ENGINEER_MAX }}" value="{{ ticket.assigned_engineer or '' }}"
+                 placeholder="Engineer name" aria-label="Engineer name">
+          <div class="form-text mb-3">Leave empty to unassign.</div>
           <button type="submit" class="btn btn-primary w-100">Save</button>
         </form>
       </div>

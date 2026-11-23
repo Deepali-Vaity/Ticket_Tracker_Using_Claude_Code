@@ -10,18 +10,21 @@ from database import get_connection
 
 PRIORITIES = ("Low", "Medium", "High")
 STATUSES = ("Open", "In Progress", "Closed")
+# Special ?engineer= value meaning "tickets with no engineer assigned".
+UNASSIGNED = "__unassigned__"
 
 
-def create_ticket(title, description, priority):
+def create_ticket(title, description, priority, assigned_engineer=None):
     """Insert a new ticket (status 'Open') and return its id."""
     created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn = get_connection()
     try:
         with conn:
             cursor = conn.execute(
-                "INSERT INTO tickets (title, description, priority, status, created_at) "
-                "VALUES (?, ?, ?, 'Open', ?)",
-                (title, description, priority, created_at),
+                "INSERT INTO tickets "
+                "(title, description, priority, status, created_at, assigned_engineer) "
+                "VALUES (?, ?, ?, 'Open', ?, ?)",
+                (title, description, priority, created_at, assigned_engineer or None),
             )
             return cursor.lastrowid
     finally:
@@ -39,17 +42,57 @@ def get_ticket(ticket_id):
         conn.close()
 
 
-def list_tickets(status=None):
-    """Return tickets newest first, optionally filtered by status."""
-    query = "SELECT * FROM tickets"
-    params = ()
+def list_tickets(status=None, engineer=None):
+    """Return tickets newest first, optionally filtered by status and/or engineer.
+
+    engineer may be a name (matched case-insensitively) or UNASSIGNED.
+    """
+    conditions = []
+    params = []
     if status in STATUSES:
-        query += " WHERE status = ?"
-        params = (status,)
+        conditions.append("status = ?")
+        params.append(status)
+    if engineer == UNASSIGNED:
+        conditions.append("assigned_engineer IS NULL")
+    elif engineer:
+        conditions.append("assigned_engineer = ? COLLATE NOCASE")
+        params.append(engineer)
+    query = "SELECT * FROM tickets"
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)  # fixed text only, values are bound
     query += " ORDER BY created_at DESC, id DESC"
     conn = get_connection()
     try:
         return conn.execute(query, params).fetchall()
+    finally:
+        conn.close()
+
+
+def list_engineers():
+    """Return the distinct engineer names in use (case-insensitive), sorted."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT MIN(assigned_engineer) AS name FROM tickets "
+            "WHERE assigned_engineer IS NOT NULL "
+            "GROUP BY assigned_engineer COLLATE NOCASE "
+            "ORDER BY name COLLATE NOCASE"
+        ).fetchall()
+    finally:
+        conn.close()
+    return [row["name"] for row in rows]
+
+
+def update_engineer(ticket_id, engineer):
+    """Assign (or clear, with an empty value) a ticket's engineer. True if found."""
+    conn = get_connection()
+    try:
+        with conn:
+            cursor = conn.execute(
+                "UPDATE tickets SET assigned_engineer = ? WHERE id = ?",
+                (engineer or None, ticket_id),
+            )
+            return cursor.rowcount > 0
     finally:
         conn.close()
 

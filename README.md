@@ -8,6 +8,7 @@ Built with Python 3.12, Flask, SQLite and Bootstrap 5.
 - List all tickets and filter by status
 - View ticket details
 - Update ticket status (Open, In Progress, Closed)
+- Assign an engineer to a ticket and filter tickets by engineer (or "Unassigned")
 - Dashboard with ticket counts by status and priority
 
 ## Run locally (Windows PowerShell)
@@ -53,7 +54,8 @@ Tests use a temporary database, so `data/tickets.db` is never touched.
 
 | URL | Description |
 |---|---|
-| `/` | Ticket list; `?status=Open` (or `In Progress`, `Closed`) filters |
+| `/` | Ticket list; `?status=Open` (or `In Progress`, `Closed`) and `?engineer=Name` filters, combinable |
+| `/tickets/<id>/engineer` | POST: assign or clear the engineer (used by the detail page) |
 | `/tickets/new` | Create a ticket |
 | `/tickets/<id>` | Ticket details and status update |
 | `/dashboard` | Counts summary |

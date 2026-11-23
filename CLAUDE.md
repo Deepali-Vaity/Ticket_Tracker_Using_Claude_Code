@@ -69,10 +69,11 @@ Browser (Bootstrap 5 pages)
 
 | Method | URL | Purpose |
 |---|---|---|
-| GET | `/` | List; `?status=` filters (invalid values are ignored) |
+| GET | `/` | List; `?status=` filters (invalid values are ignored); `?engineer=<name>` or `?engineer=__unassigned__` filters by engineer; both combine |
 | GET/POST | `/tickets/new` | Create ticket |
 | GET | `/tickets/<int:id>` | Detail (404 if missing) |
 | POST | `/tickets/<int:id>/status` | Update status, then redirect to detail |
+| POST | `/tickets/<int:id>/engineer` | Assign engineer (empty = unassign), then redirect to detail |
 | GET | `/dashboard` | Counts by status and priority |
 
 **Layer rules:** `app.py` never contains SQL; `models.py` never imports Flask; templates contain presentation only (no business logic beyond simple conditionals/loops).
@@ -113,7 +114,7 @@ Browser (Bootstrap 5 pages)
 
 ## 6. Testing Strategy
 
-Current state: 33 `pytest` tests in `tests/` (`test_models.py`, `test_routes.py`). Run with `pip install -r requirements-dev.txt` then `python -m pytest -v`. Run them after every change and add or update tests for any behaviour you change.
+Current state: 55 `pytest` tests in `tests/` (`test_models.py`, `test_routes.py`). Run with `pip install -r requirements-dev.txt` then `python -m pytest -v`. Run them after every change and add or update tests for any behaviour you change.
 
 `tests/conftest.py` sets `TICKET_DB_PATH` to a temp file **before** importing the app (database.py reads it at import time) and empties the table before each test. Never bypass this; tests must not touch the real `data/tickets.db`.
 
@@ -147,6 +148,7 @@ Report what was and was not verified. Never claim success without having run som
 | `priority` | TEXT | NOT NULL, CHECK in (Low, Medium, High) |
 | `status` | TEXT | NOT NULL, DEFAULT 'Open', CHECK in (Open, In Progress, Closed) |
 | `created_at` | TEXT | NOT NULL, `YYYY-MM-DD HH:MM:SS` local time, set by the app |
+| `assigned_engineer` | TEXT | NULL = unassigned; free text, max 100 chars, trimmed; matched case-insensitively. Added by a migration in `init_db()` for older databases |
 
 - **All SQL lives in `models.py`** (plus schema/seed in `database.py`).
 - **Always parameterise** with `?` placeholders. Never build SQL from user input. The only f-string SQL allowed is `_count_by`, which uses hard-coded column names, never request data.
