@@ -110,6 +110,8 @@ Browser (Bootstrap 5 pages)
 - `main` is always runnable. Work on short-lived branches: `feature/<topic>`, `fix/<topic>`, `chore/<topic>`.
 - **Checkpoint before major modifications:** suggest a commit (or tag) first, e.g. `git add -A && git commit -m "checkpoint: before <change>"`. "Major" means schema changes, changes touching 3+ files, dependency changes, deletions or renames, and large template rewrites.
 - Commit only when the user asks. Never force-push or rewrite history unprompted.
+- **Pull request flow (GitHub):** push the feature branch, open a pull request into `main` (the `gh` CLI is not installed, so give the user the `https://github.com/<owner>/<repo>/pull/new/<branch>` link), wait for the CI workflow (`.github/workflows/ci.yml`: pytest on Linux and Windows) to pass, then merge. Do not push directly to `main` once the user has enabled branch protection. Never change GitHub settings without explicit approval.
+- After a branch is merged, delete it locally with `git branch -d <branch>` (it refuses to delete unmerged work).
 - Commit messages: imperative, <= 72 chars subject, body explains *why*. One logical change per commit.
 - `.gitignore` must contain: `.venv/`, `__pycache__/`, `*.pyc`, `data/*.db`, `.env`.
 - Never commit secrets, `.env` files or the SQLite database.

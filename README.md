@@ -1,5 +1,7 @@
 # IT Helpdesk Ticket Tracker
 
+[![CI](https://github.com/Deepali-Vaity/Ticket_Tracker_Using_Claude_Code/actions/workflows/ci.yml/badge.svg)](https://github.com/Deepali-Vaity/Ticket_Tracker_Using_Claude_Code/actions/workflows/ci.yml)
+
 A beginner-friendly web app to log and track IT support tickets.
 Built with Python 3.12, Flask, SQLite and Bootstrap 5.
 
@@ -38,6 +40,18 @@ python -m pytest -v
 ```
 
 Tests use a temporary database, so `data/tickets.db` is never touched.
+
+## Contributing flow
+
+1. Create a branch: `git checkout -b feature/<topic>` (or `fix/` / `chore/`).
+2. Make the change, run `python -m pytest -q`, commit.
+3. Push the branch and open a pull request into `main`.
+4. GitHub Actions (`.github/workflows/ci.yml`) runs the tests on Linux and Windows.
+   Merge only when both are green.
+5. Delete the merged branch: `git branch -d <topic>`.
+
+Tip: in GitHub, go to Settings, Branches, and add a rule for `main` that requires a pull
+request and the `pytest` checks to pass, so this flow is enforced.
 
 ## Protecting `data/` from Claude Code (optional hook)
 

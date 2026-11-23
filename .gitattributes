@@ -1,0 +1,8 @@
+# Normalise line endings: store and check out LF everywhere (no CRLF warnings on Windows).
+* text=auto eol=lf
+
+# Binary files: never convert.
+*.db binary
+*.png binary
+*.jpg binary
+*.ico binary
