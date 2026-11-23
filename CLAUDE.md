@@ -76,6 +76,8 @@ Browser (Bootstrap 5 pages)
 | POST | `/tickets/<int:id>/engineer` | Assign engineer (empty = unassign), then redirect to detail |
 | GET | `/dashboard` | Counts by status and priority |
 
+**Claude tooling (read-only, outside the app):** `.claude/commands/review-ticket.md` (`/review-ticket <file>`) reviews one ticket file; `.claude/skills/ticket-quality/` (script `scripts/ticket_quality.py`, tested in `tests/test_ticket_quality.py`) produces a backlog quality report from `data/tickets.db` or a JSON/CSV file. Neither modifies data.
+
 **Layer rules:** `app.py` never contains SQL; `models.py` never imports Flask; templates contain presentation only (no business logic beyond simple conditionals/loops).
 
 ## 3. Coding Standards
