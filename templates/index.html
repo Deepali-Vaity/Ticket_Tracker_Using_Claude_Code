@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Tickets - IT Helpdesk{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h1 class="h3 mb-0">Tickets</h1>
+  <div class="btn-group" role="group" aria-label="Filter by status">
+    <a href="{{ url_for('index') }}"
+       class="btn btn-outline-secondary {{ 'active' if not current_status }}">All</a>
+    {% for s in STATUSES %}
+      <a href="{{ url_for('index', status=s) }}"
+         class="btn btn-outline-secondary {{ 'active' if current_status == s }}">{{ s }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th><th>Title</th><th>Priority</th><th>Status</th><th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tickets %}
+        <tr>
+          <td>#{{ t.id }}</td>
+          <td><a href="{{ url_for('ticket_detail', ticket_id=t.id) }}">{{ t.title }}</a></td>
+          <td><span class="badge text-bg-{{ PRIORITY_COLORS[t.priority] }}">{{ t.priority }}</span></td>
+          <td><span class="badge text-bg-{{ STATUS_COLORS[t.status] }}">{{ t.status }}</span></td>
+          <td class="text-nowrap">{{ t.created_at }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="text-center text-muted py-4">
+            No tickets found{% if current_status %} with status "{{ current_status }}"{% endif %}.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="text-muted small mt-2">{{ tickets|length }} ticket(s) shown.</p>
+{% endblock %}

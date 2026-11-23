@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}New Ticket - IT Helpdesk{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-3">Create Ticket</h1>
+<div class="card">
+  <div class="card-body">
+    <form method="post" action="{{ url_for('create_ticket') }}" novalidate>
+      <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" id="title" name="title"
+               maxlength="{{ title_max }}" value="{{ form.title }}" required>
+      </div>
+      <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="5"
+                  maxlength="{{ description_max }}" required>{{ form.description }}</textarea>
+      </div>
+      <div class="mb-3">
+        <label for="priority" class="form-label">Priority</label>
+        <select class="form-select" id="priority" name="priority">
+          {% for p in PRIORITIES %}
+            <option value="{{ p }}" {{ 'selected' if form.priority == p }}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Create Ticket</button>
+      <a href="{{ url_for('index') }}" class="btn btn-link">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

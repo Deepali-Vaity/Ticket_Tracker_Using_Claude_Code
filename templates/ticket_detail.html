@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Ticket #{{ ticket.id }} - IT Helpdesk{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Tickets</a></li>
+    <li class="breadcrumb-item active" aria-current="page">#{{ ticket.id }}</li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <h1 class="h4">{{ ticket.title }}</h1>
+        <div class="mb-3">
+          <span class="badge text-bg-{{ PRIORITY_COLORS[ticket.priority] }}">{{ ticket.priority }} priority</span>
+          <span class="badge text-bg-{{ STATUS_COLORS[ticket.status] }}">{{ ticket.status }}</span>
+        </div>
+        <p class="ticket-description mb-0">{{ ticket.description }}</p>
+      </div>
+      <div class="card-footer text-muted small">Created {{ ticket.created_at }}</div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h6">Update status</h2>
+        <form method="post" action="{{ url_for('update_ticket_status', ticket_id=ticket.id) }}">
+          <select class="form-select mb-3" name="status" aria-label="Status">
+            {% for s in STATUSES %}
+              <option value="{{ s }}" {{ 'selected' if ticket.status == s }}>{{ s }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-primary w-100">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

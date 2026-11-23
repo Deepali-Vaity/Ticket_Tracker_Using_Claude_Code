@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - IT Helpdesk{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-3">Dashboard</h1>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <a class="text-decoration-none text-reset" href="{{ url_for('index') }}">
+      <div class="card h-100"><div class="card-body">
+        <div class="text-muted small">Total tickets</div>
+        <div class="stat-number">{{ counts.total }}</div>
+      </div></div>
+    </a>
+  </div>
+  {% for s in STATUSES %}
+  <div class="col-6 col-md-3">
+    <a class="text-decoration-none text-reset" href="{{ url_for('index', status=s) }}">
+      <div class="card h-100 border-top border-4 border-{{ STATUS_COLORS[s] }}"><div class="card-body">
+        <div class="text-muted small">{{ s }}</div>
+        <div class="stat-number">{{ counts.by_status[s] }}</div>
+      </div></div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h2 class="h6 mb-3">Tickets by priority</h2>
+    {% for p in PRIORITIES %}
+      {% set n = counts.by_priority[p] %}
+      {% set pct = (n * 100 / counts.total) | round | int if counts.total else 0 %}
+      <div class="mb-3">
+        <div class="d-flex justify-content-between small">
+          <span>{{ p }}</span><span>{{ n }}</span>
+        </div>
+        <div class="progress" role="progressbar" aria-label="{{ p }} priority share"
+             aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar bg-{{ PRIORITY_COLORS[p] }}" style="width: {{ pct }}%"></div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
